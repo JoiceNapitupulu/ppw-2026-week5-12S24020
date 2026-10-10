@@ -126,30 +126,56 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 2px solid #E2E8F0;
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+        }
+
+        .table-custom tbody td {
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
         }
 
         .pagination {
             margin-bottom: 0;
+            gap: 3px;
+        }
+
+        .page-item .page-link {
+            color: var(--del-purple);
+            border-radius: 6px !important;
+            border: 1px solid #E2E8F0;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+            background-color: #FFFFFF;
+        }
+
+        .page-item .page-link:hover {
+            background-color: var(--del-purple-light);
+            border-color: var(--del-purple-border);
+            color: var(--del-purple-hover);
         }
 
         .page-item.active .page-link {
             background-color: var(--del-purple);
             border-color: var(--del-purple);
+            color: #FFFFFF;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(76, 29, 149, 0.25);
         }
 
-        .page-link {
-            color: var(--del-purple);
-        }
-
-        .page-link:hover {
-            color: var(--del-purple-hover);
+        .page-item.disabled .page-link {
+            color: #94A3B8;
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
         }
     </style>
 </head>
 <body>
     <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-del shadow-sm">
-        <div class="container">
+        <div class="container-xl">
             <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('buku.index') }}">
                 <span class="badge bg-white rounded-pill p-2" style="color: #4C1D95 !important;">
                     <i class="bi bi-book-half fs-6"></i>
@@ -177,7 +203,7 @@
     </nav>
 
     <!-- Main Content Container -->
-    <main class="container py-4">
+    <main class="container-xl py-4">
         <!-- Flash Session Messages -->
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show d-flex align-items-center shadow-sm" role="alert">

@@ -2,7 +2,7 @@
 **Tugas Mandiri Praktikum Pemrograman & Pengujian Web (12S3101) — Minggu 05**  
 **Institut Teknologi Del**
 
-Proyek ini mengimplementasikan sistem informasi pengelolaan perpustakaan kampus berbasis **Laravel 11.x** berlandaskan pola arsitektur **Model-View-Controller (MVC)**, **Eloquent ORM (Relasi One-to-Many & Eager Loading)**, **Validasi Form Server-Side**, **Blade Component Engine**, dan **SQL Query Performance Audit**.
+Proyek ini mengimplementasikan sistem informasi pengelolaan perpustakaan kampus berbasis **Laravel 11.x** dan **PostgreSQL** berlandaskan pola arsitektur **Model-View-Controller (MVC)**, **Eloquent ORM (Relasi One-to-Many & Eager Loading)**, **Validasi Form Server-Side**, **Blade Component Engine**, dan **SQL Query Performance Audit**.
 
 ---
 
@@ -65,20 +65,24 @@ Proyek ini mengimplementasikan sistem informasi pengelolaan perpustakaan kampus 
 - Paginasi Bootstrap 5 yang berfungsi aktif.
 
 ### 6. Database Seeders & Mock Data Realistis (Bobot: 10%)
-- Menyediakan Seeder dan Factory untuk menghasilkan minimal 6 kategori pustaka tematik dan 26+ koleksi buku realistis memanfaatkan pustaka Faker.
+- Menyediakan Seeder dan Factory untuk menghasilkan 6 kategori dan 30 koleksi buku referensi teknologi informasi (Computer Science / Software Engineering).
 - Perintah eksekusi:
   ```bash
   php artisan migrate:fresh --seed
   ```
 
 ### 7. Audit Kueri Kinerja SQL (Mitigasi N+1 Problem)
-Telah dipasang listener `DB::listen` pada `AppServiceProvider.php` untuk membuktikan efektivitas Eager Loading:
+Telah dipasang listener `DB::listen` pada `AppServiceProvider.php` untuk membuktikan efektivitas Eager Loading.
+
+**Bukti Log Audit SQL dari `storage/logs/laravel.log`:**
 ```log
-[SQL AUDIT] (0.21 ms) select count(*) as aggregate from "bukus"
-[SQL AUDIT] (0.18 ms) select * from "bukus" order by "created_at" desc limit 10 offset 0
-[SQL AUDIT] (0.12 ms) select * from "kategoris" where "kategoris"."id" in (1, 2, 3, 4)
+[2026-10-10 10:52:11] local.INFO: [SQL AUDIT] (50.30 ms) select count(*) as aggregate from "bukus"
+[2026-10-10 10:52:11] local.INFO: [SQL AUDIT] (1.23 ms) select * from "bukus" order by "created_at" desc limit 10 offset 0
+[2026-10-10 10:52:11] local.INFO: [SQL AUDIT] (3.66 ms) select * from "kategoris" where "kategoris"."id" in (1, 2, 3, 4, 5, 6)
 ```
-> **Hasil Audit:** Pengambilan seluruh katalog buku dan data relasi kategorinya terbukti hanya mengeksekusi **2 kueri data terpadu** (ditambah 1 kueri agregat pagination), meniadakan bahaya *N+1 Query Problem*.
+
+> **Hasil Audit:** 
+> Pengambilan seluruh katalog buku dan data relasi kategorinya terbukti hanya mengeksekusi **2 kueri data terpadu** (ditambah 1 kueri agregat pagination), meniadakan bahaya *N+1 Query Problem*.
 
 ---
 
@@ -96,13 +100,23 @@ Telah dipasang listener `DB::listen` pada `AppServiceProvider.php` untuk membukt
    php artisan key:generate
    ```
 
-3. **Migrasi & Jalankan Seeder**:
+3. **Konfigurasi Database di `.env` (PostgreSQL)**:
+   ```env
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=sipus_del
+   DB_USERNAME=postgres
+   DB_PASSWORD=123456
+   ```
+
+4. **Migrasi & Jalankan Seeder**:
    ```bash
    php artisan migrate:fresh --seed
    ```
 
-4. **Jalankan Server Lokal**:
+5. **Jalankan Server Lokal**:
    ```bash
    php artisan serve
    ```
-   Aplikasi dapat diakses melalui: `http://localhost:8000/buku`.
+   Aplikasi dapat diakses melalui peramban: `http://localhost:8000/buku`.

@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout title="Katalog Buku">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark mb-1">Katalog Buku Perpustakaan Del</h2>
@@ -20,13 +20,13 @@
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 50px;">No</th>
-                        <th style="width: 140px;">ISBN</th>
+                        <th style="width: 150px;">ISBN</th>
                         <th>Judul Buku</th>
-                        <th style="width: 150px;">Kategori</th>
+                        <th style="width: 200px;">Kategori</th>
                         <th style="width: 150px;">Penulis</th>
                         <th class="text-center" style="width: 80px;">Tahun</th>
                         <th class="text-center" style="width: 90px;">Stok</th>
-                        <th class="text-center" style="width: 150px;">Aksi</th>
+                        <th class="text-center" style="width: 120px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +49,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('kategori.show', $buku->kategori) }}" class="badge badge-del text-decoration-none px-2 py-1">
+                                <a href="{{ route('kategori.show', $buku->kategori) }}" class="badge badge-del text-decoration-none text-wrap text-start px-2 py-1">
                                     <i class="bi bi-tag me-1"></i>{{ $buku->kategori->nama_kategori }}
                                 </a>
                             </td>
@@ -71,17 +71,17 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <div class="d-inline-flex gap-1">
-                                    <a href="{{ route('buku.show', $buku) }}" class="btn btn-sm btn-outline-secondary" title="Detail">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ route('buku.show', $buku) }}" class="btn btn-outline-secondary" title="Detail">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('buku.edit', $buku) }}" class="btn btn-sm btn-outline-primary" title="Sunting">
+                                    <a href="{{ route('buku.edit', $buku) }}" class="btn btn-outline-primary" title="Sunting">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                     <form action="{{ route('buku.destroy', $buku) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku {{ $buku->judul }}?');" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                        <button type="submit" class="btn btn-outline-danger" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" title="Hapus">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -105,14 +105,7 @@
         </div>
         @if($bukus->hasPages())
             <div class="card-footer bg-white py-3 border-top">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span class="text-muted small">
-                        Menampilkan {{ $bukus->firstItem() ?? 0 }} sampai {{ $bukus->lastItem() ?? 0 }} dari {{ $bukus->total() }} buku
-                    </span>
-                    <div>
-                        {{ $bukus->links() }}
-                    </div>
-                </div>
+                {{ $bukus->links() }}
             </div>
         @endif
     </div>

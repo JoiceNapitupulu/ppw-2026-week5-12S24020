@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout title="Kategori Buku">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark mb-1">Kategori Buku Perpustakaan</h2>
@@ -22,8 +22,8 @@
                         <th class="text-center" style="width: 60px;">No</th>
                         <th style="width: 180px;">Kode Kategori</th>
                         <th>Nama Kategori</th>
-                        <th class="text-center" style="width: 150px;">Jumlah Buku</th>
-                        <th class="text-center" style="width: 200px;">Aksi</th>
+                        <th class="text-center" style="width: 160px;">Jumlah Buku</th>
+                        <th class="text-center" style="width: 140px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,22 +41,22 @@
                                 {{ $kat->nama_kategori }}
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-secondary rounded-pill px-3 py-1">
+                                <span class="badge bg-secondary-subtle text-secondary border px-3 py-1">
                                     {{ $kat->bukus_count }} Koleksi
                                 </span>
                             </td>
                             <td class="text-center">
-                                <div class="d-inline-flex gap-1">
-                                    <a href="{{ route('kategori.show', $kat) }}" class="btn btn-sm btn-outline-secondary" title="Lihat Detail">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ route('kategori.show', $kat) }}" class="btn btn-outline-secondary" title="Lihat Detail">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('kategori.edit', $kat) }}" class="btn btn-sm btn-outline-primary" title="Sunting">
+                                    <a href="{{ route('kategori.edit', $kat) }}" class="btn btn-outline-primary" title="Sunting">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                     <form action="{{ route('kategori.destroy', $kat) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori {{ $kat->nama_kategori }}? Seluruh buku dalam kategori ini akan ikut terhapus!');" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                        <button type="submit" class="btn btn-outline-danger" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" title="Hapus">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -80,14 +80,7 @@
         </div>
         @if($kategoris->hasPages())
             <div class="card-footer bg-white py-3 border-top">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <span class="text-muted small">
-                        Menampilkan {{ $kategoris->firstItem() ?? 0 }} sampai {{ $kategoris->lastItem() ?? 0 }} dari {{ $kategoris->total() }} kategori
-                    </span>
-                    <div>
-                        {{ $kategoris->links() }}
-                    </div>
-                </div>
+                {{ $kategoris->links() }}
             </div>
         @endif
     </div>
