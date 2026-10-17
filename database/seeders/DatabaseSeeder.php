@@ -4,7 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\Buku;
 use App\Models\Kategori;
+use App\Models\Peminjaman;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,7 +16,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Kategori Buku Rujukan Bidang Teknologi Informasi / Ilmu Komputer
+        // 1. Akun Pustakawan Uji Praktikum
+        User::updateOrCreate(
+            ['email' => 'pustakawan@del.ac.id'],
+            [
+                'name'     => 'Pustakawan Del',
+                'password' => Hash::make('password123'),
+            ]
+        );
+
+        // 2. Kategori Buku Rujukan Bidang Teknologi Informasi / Ilmu Komputer
         $kategoriList = [
             'KAT-RPL' => [
                 'kode_kategori' => 'KAT-RPL',
@@ -43,15 +55,15 @@ class DatabaseSeeder extends Seeder
 
         $kategoris = [];
         foreach ($kategoriList as $key => $data) {
-            $kategoris[$key] = Kategori::firstOrCreate(
+            $kategoris[$key] = Kategori::updateOrCreate(
                 ['kode_kategori' => $data['kode_kategori']],
                 $data
             );
         }
 
-        // 2. Daftar 30 Buku Rujukan Akademis & Industri IT
+        // 3. Koleksi Buku Realistis (Memiliki Buku dengan Stok 0 dan Stok 1 untuk Pengujian ACID)
         $bukuList = [
-            // --- Rekayasa Perangkat Lunak ---
+            // --- Rekayasa Perangkat Lunak & Pemrograman ---
             [
                 'isbn' => '978-0132350884',
                 'judul' => 'Clean Code: A Handbook of Agile Software Craftsmanship',
@@ -59,8 +71,18 @@ class DatabaseSeeder extends Seeder
                 'penerbit' => 'Prentice Hall',
                 'tahun_terbit' => 2008,
                 'kategori_id' => $kategoris['KAT-RPL']->id,
-                'stok' => 12,
-                'sinopsis' => 'Panduan fundamental mengenai penulisan kode yang bersih, mudah dipahami, serta prinsip refactoring untuk membangun perangkat lunak berkualitas tinggi.',
+                'stok' => 1, // Stok = 1 untuk pengujian concurrency/transaksi ACID
+                'sinopsis' => 'Buku standar industri tentang prinsip penulisan kode yang bersih, mudah dirawat, modular, dan teruji secara profesional.',
+            ],
+            [
+                'isbn' => '978-0201616224',
+                'judul' => 'The Pragmatic Programmer: Your Journey To Mastery (20th Anniversary Edition)',
+                'penulis' => 'David Thomas, Andrew Hunt',
+                'penerbit' => 'Addison-Wesley Professional',
+                'tahun_terbit' => 2019,
+                'kategori_id' => $kategoris['KAT-RPL']->id,
+                'stok' => 0, // Stok = 0 untuk pengujian penolakan peminjaman & rollback
+                'sinopsis' => 'Pedoman esensial bagi pengembang perangkat lunak profesional mengenai arsitektur kode fleksibel dan metodologi pragmatis.',
             ],
             [
                 'isbn' => '978-0201633610',
@@ -70,89 +92,59 @@ class DatabaseSeeder extends Seeder
                 'tahun_terbit' => 1994,
                 'kategori_id' => $kategoris['KAT-RPL']->id,
                 'stok' => 10,
-                'sinopsis' => 'Buku legendaris Gang of Four (GoF) yang menguraikan 23 pola desain perangkat lunak berorientasi objek untuk solusi arsitektural yang dapat digunakan kembali.',
+                'sinopsis' => 'Karya klasik "Gang of Four" (GoF) yang memperkenalkan 23 pola desain perangkat lunak berorientasi objek yang paling berpengaruh di dunia komputasi.',
+            ],
+            [
+                'isbn' => '978-0321125217',
+                'judul' => 'Domain-Driven Design: Tackling Complexity in the Heart of Software',
+                'penulis' => 'Eric Evans',
+                'penerbit' => 'Addison-Wesley',
+                'tahun_terbit' => 2003,
+                'kategori_id' => $kategoris['KAT-RPL']->id,
+                'stok' => 8,
+                'sinopsis' => 'Pendekatan sistematis memodelkan logika bisnis yang kompleks menjadi struktur kode modular yang terisolasi dengan baik.',
             ],
             [
                 'isbn' => '978-0134494166',
-                'judul' => 'Clean Architecture: A Craftsman\'s Guide to Software Structure',
+                'judul' => 'Clean Architecture: A Craftsman\'s Guide to Software Structure and Design',
                 'penulis' => 'Robert C. Martin',
                 'penerbit' => 'Prentice Hall',
                 'tahun_terbit' => 2017,
                 'kategori_id' => $kategoris['KAT-RPL']->id,
-                'stok' => 8,
-                'sinopsis' => 'Penjelasan mendalam tentang aturan universal arsitektur perangkat lunak independen dari framework, database, dan antarmuka eksternal.',
-            ],
-            [
-                'isbn' => '978-0135974445',
-                'judul' => 'The Pragmatic Programmer: Your Journey to Mastery',
-                'penulis' => 'David Thomas, Andrew Hunt',
-                'penerbit' => 'Addison-Wesley',
-                'tahun_terbit' => 2019,
-                'kategori_id' => $kategoris['KAT-RPL']->id,
                 'stok' => 15,
-                'sinopsis' => 'Buku wajib bagi perekayasa perangkat lunak modern yang membahas kebiasaan, pola pikir, dan praktik terbaik profesional pemrograman.',
-            ],
-            [
-                'isbn' => '978-0134757599',
-                'judul' => 'Refactoring: Improving the Design of Existing Code',
-                'penulis' => 'Martin Fowler',
-                'penerbit' => 'Addison-Wesley',
-                'tahun_terbit' => 2018,
-                'kategori_id' => $kategoris['KAT-RPL']->id,
-                'stok' => 7,
-                'sinopsis' => 'Teknik merombak struktur internal basis kode yang sudah ada tanpa mengubah perilaku eksternalnya guna meningkatkan keterbacaan dan perawatan sistem.',
+                'sinopsis' => 'Panduan mendesain arsitektur aplikasi modular yang independen terhadap framework, antarmuka pengguna, dan basis data.',
             ],
 
             // --- Struktur Data & Algoritma ---
             [
                 'isbn' => '978-0262046305',
-                'judul' => 'Introduction to Algorithms (CLRS)',
+                'judul' => 'Introduction to Algorithms (4th Edition)',
                 'penulis' => 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein',
                 'penerbit' => 'MIT Press',
                 'tahun_terbit' => 2022,
                 'kategori_id' => $kategoris['KAT-ALGO']->id,
                 'stok' => 20,
-                'sinopsis' => 'Buku standar internasional kurikulum universitas yang menyajikan kajian komprehensif analisis kompleksitas, graf, pemrograman dinamis, dan struktur data tingkat lanjut.',
+                'sinopsis' => 'Dikenal sebagai "CLRS", buku referensi komprehensif tentang teori kompleksitas algoritma, struktur data canggih, dan teknik optimasi kueri.',
             ],
             [
                 'isbn' => '978-0321573513',
                 'judul' => 'Algorithms (4th Edition)',
                 'penulis' => 'Robert Sedgewick, Kevin Wayne',
-                'penerbit' => 'Addison-Wesley',
+                'penerbit' => 'Addison-Wesley Professional',
                 'tahun_terbit' => 2011,
                 'kategori_id' => $kategoris['KAT-ALGO']->id,
-                'stok' => 14,
-                'sinopsis' => 'Pendekatan praktis dan elegan untuk mempelajari algoritma pencarian, pengurutan, graf, dan pemrosesan string menggunakan implementasi nyata.',
+                'stok' => 12,
+                'sinopsis' => 'Eksplorasi mendalam struktur data graf, algoritma pencarian, pengurutan, kompresi data, dan manipulasi memori terstruktur.',
             ],
             [
-                'isbn' => '978-0984782857',
-                'judul' => 'Cracking the Coding Interview: 189 Programming Questions and Solutions',
-                'penulis' => 'Gayle Laakmann McDowell',
-                'penerbit' => 'CareerCup',
-                'tahun_terbit' => 2015,
+                'isbn' => '978-0134845623',
+                'judul' => 'The Algorithm Design Manual (3rd Edition)',
+                'penulis' => 'Steven S. Skiena',
+                'penerbit' => 'Springer',
+                'tahun_terbit' => 2020,
                 'kategori_id' => $kategoris['KAT-ALGO']->id,
-                'stok' => 25,
-                'sinopsis' => 'Panduan pemecahan masalah algoritma dan struktur data intensif untuk wawancara teknis di perusahaan teknologi global papan atas.',
-            ],
-            [
-                'isbn' => '978-1617292231',
-                'judul' => 'Grokking Algorithms: An Illustrated Guide for Programmers',
-                'penulis' => 'Aditya Bhargava',
-                'penerbit' => 'Manning Publications',
-                'tahun_terbit' => 2016,
-                'kategori_id' => $kategoris['KAT-ALGO']->id,
-                'stok' => 18,
-                'sinopsis' => 'Pengenalan algoritma visual yang ramah pemula dengan ilustrasi menarik, mencakup binary search, graf Dijkstra, dan algoritma greedy.',
-            ],
-            [
-                'isbn' => '978-0201896831',
-                'judul' => 'The Art of Computer Programming: Fundamental Algorithms',
-                'penulis' => 'Donald E. Knuth',
-                'penerbit' => 'Addison-Wesley',
-                'tahun_terbit' => 2011,
-                'kategori_id' => $kategoris['KAT-ALGO']->id,
-                'stok' => 5,
-                'sinopsis' => 'Karya monumen ilmu komputer mengenai dasar-dasar matematika algoritma dan struktur data diskret.',
+                'stok' => 9,
+                'sinopsis' => 'Buku pegangan praktis dalam memecahkan masalah komputasional dunia nyata menggunakan katalog algoritma dan war story implementasi.',
             ],
 
             // --- Basis Data & Manajemen Data ---
@@ -163,61 +155,21 @@ class DatabaseSeeder extends Seeder
                 'penerbit' => 'McGraw-Hill Education',
                 'tahun_terbit' => 2019,
                 'kategori_id' => $kategoris['KAT-BD']->id,
-                'stok' => 16,
-                'sinopsis' => 'Rujukan primer perancangan basis data relasional, aljabar relasional, normalisasi skema, indexing B-Tree, optimasi kueri, dan transaksi ACID.',
+                'stok' => 18,
+                'sinopsis' => 'Buku teks standar universitas yang mencakup model relasional, transaksi ACID, konkurensi indexing, dan arsitektur database modern.',
             ],
             [
                 'isbn' => '978-1449373320',
-                'judul' => 'Designing Data-Intensive Applications',
+                'judul' => 'Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, and Maintainable Systems',
                 'penulis' => 'Martin Kleppmann',
                 'penerbit' => 'O\'Reilly Media',
                 'tahun_terbit' => 2017,
                 'kategori_id' => $kategoris['KAT-BD']->id,
-                'stok' => 22,
-                'sinopsis' => 'Eksplorasi mendalam arsitektur sistem penyimpanan data berskala besar, replikasi, partisi, konsistensi data, dan pemrosesan stream.',
-            ],
-            [
-                'isbn' => '978-1492057611',
-                'judul' => 'Learning SQL: Generate, Manipulate, and Retrieve Data',
-                'penulis' => 'Alan Beaulieu',
-                'penerbit' => 'O\'Reilly Media',
-                'tahun_terbit' => 2020,
-                'kategori_id' => $kategoris['KAT-BD']->id,
-                'stok' => 15,
-                'sinopsis' => 'Tutorial komprehensif menguasai sintaks SQL, pembuatan kueri kompleks, join tabel, subquery, ekspresi kondisional, dan manipulasi data transaksi.',
-            ],
-            [
-                'isbn' => '978-0133970777',
-                'judul' => 'Fundamentals of Database Systems (7th Edition)',
-                'penulis' => 'Ramez Elmasri, Shamkant B. Navathe',
-                'penerbit' => 'Pearson',
-                'tahun_terbit' => 2015,
-                'kategori_id' => $kategoris['KAT-BD']->id,
-                'stok' => 9,
-                'sinopsis' => 'Buku teks standar model pemodelan konseptual ER/EER, sistem manajemen basis data SQL dan NoSQL, serta keamanan basis data.',
-            ],
-            [
-                'isbn' => '978-0072465631',
-                'judul' => 'Database Management Systems (3rd Edition)',
-                'penulis' => 'Raghu Ramakrishnan, Johannes Gehrke',
-                'penerbit' => 'McGraw-Hill',
-                'tahun_terbit' => 2003,
-                'kategori_id' => $kategoris['KAT-BD']->id,
-                'stok' => 6,
-                'sinopsis' => 'Dikenal sebagai "Buku Sapi", mengulas secara terperinci perancangan mesin database, manajemen buffer, dan pemulihan crash.',
+                'stok' => 25,
+                'sinopsis' => 'Kajian mutakhir mengenai penyimpanan data terdistribusi, replikasi, partisi, konsistensi transaksi, dan stream processing.',
             ],
 
             // --- Jaringan Komputer & Keamanan Siber ---
-            [
-                'isbn' => '978-0136681557',
-                'judul' => 'Computer Networking: A Top-Down Approach (8th Edition)',
-                'penulis' => 'James F. Kurose, Keith W. Ross',
-                'penerbit' => 'Pearson',
-                'tahun_terbit' => 2020,
-                'kategori_id' => $kategoris['KAT-JAR']->id,
-                'stok' => 18,
-                'sinopsis' => 'Rujukan utama mata kuliah jaringan komputer dengan pendekatan top-down dari lapisan aplikasi (HTTP, DNS) hingga lapisan fisik dan jaringan nirkabel.',
-            ],
             [
                 'isbn' => '978-0132126953',
                 'judul' => 'Computer Networks (5th Edition)',
@@ -227,36 +179,6 @@ class DatabaseSeeder extends Seeder
                 'kategori_id' => $kategoris['KAT-JAR']->id,
                 'stok' => 12,
                 'sinopsis' => 'Karya klasik Tanenbaum yang membedah arsitektur protokol jaringan, algoritma routing, transmisi data, dan aspek keamanan komunikasi data.',
-            ],
-            [
-                'isbn' => '978-0134444284',
-                'judul' => 'Network Security Essentials: Applications and Standards',
-                'penulis' => 'William Stallings',
-                'penerbit' => 'Pearson',
-                'tahun_terbit' => 2017,
-                'kategori_id' => $kategoris['KAT-JAR']->id,
-                'stok' => 8,
-                'sinopsis' => 'Konsep fundamental kriptografi simetris/asimetris, otentikasi jaringan IPsec, SSL/TLS, proteksi firewall, dan penanganan intrusi keamanan.',
-            ],
-            [
-                'isbn' => '978-1118026472',
-                'judul' => 'The Web Application Hacker\'s Handbook: Finding and Exploiting Security Flaws',
-                'penulis' => 'Dafydd Stuttard, Marcus Pinto',
-                'penerbit' => 'Wiley',
-                'tahun_terbit' => 2011,
-                'kategori_id' => $kategoris['KAT-JAR']->id,
-                'stok' => 7,
-                'sinopsis' => 'Panduan terdepan dalam metodologi uji penetrasi aplikasi web (web pentest), kerentanan XSS, SQL Injection, dan mekanisme pertahanan modern.',
-            ],
-            [
-                'isbn' => '978-0321336316',
-                'judul' => 'TCP/IP Illustrated, Volume 1: The Protocols',
-                'penulis' => 'W. Richard Stevens, Kevin R. Fall',
-                'penerbit' => 'Addison-Wesley',
-                'tahun_terbit' => 2011,
-                'kategori_id' => $kategoris['KAT-JAR']->id,
-                'stok' => 11,
-                'sinopsis' => 'Analisis paling mendalam dan otoritatif mengenai implementasi arsitektur protokol TCP/IP di lingkungan sistem komputasi nyata.',
             ],
 
             // --- Kecerdasan Buatan & Sains Data ---
@@ -268,47 +190,7 @@ class DatabaseSeeder extends Seeder
                 'tahun_terbit' => 2020,
                 'kategori_id' => $kategoris['KAT-AI']->id,
                 'stok' => 14,
-                'sinopsis' => 'Buku standar emas kecerdasan buatan dunia, mengupas agen cerdas, algoritma pencarian ruang keadaan, logika penalaran, probabilitas, dan pembelajaran mesin.',
-            ],
-            [
-                'isbn' => '978-0262035612',
-                'judul' => 'Deep Learning',
-                'penulis' => 'Ian Goodfellow, Yoshua Bengio, Aaron Courville',
-                'penerbit' => 'MIT Press',
-                'tahun_terbit' => 2016,
-                'kategori_id' => $kategoris['KAT-AI']->id,
-                'stok' => 13,
-                'sinopsis' => 'Landasan teori matematika dan implementasi jaringan saraf tiruan mendalam (deep neural networks), convolutional networks, dan generative models.',
-            ],
-            [
-                'isbn' => '978-0387310732',
-                'judul' => 'Pattern Recognition and Machine Learning',
-                'penulis' => 'Christopher M. Bishop',
-                'penerbit' => 'Springer',
-                'tahun_terbit' => 2006,
-                'kategori_id' => $kategoris['KAT-AI']->id,
-                'stok' => 9,
-                'sinopsis' => 'Buku teks komprehensif pembelajaran mesin berbasis pendekatan probabilitas Bayesian, regresi linier, SVM, model grafis, dan estimasi densitas.',
-            ],
-            [
-                'isbn' => '978-1098125974',
-                'judul' => 'Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow',
-                'penulis' => 'Aurelien Geron',
-                'penerbit' => 'O\'Reilly Media',
-                'tahun_terbit' => 2022,
-                'kategori_id' => $kategoris['KAT-AI']->id,
-                'stok' => 17,
-                'sinopsis' => 'Panduan terapan membangun model machine learning end-to-end, pipeline data, klasifikasi, klastering, dan model deep learning siap produksi.',
-            ],
-            [
-                'isbn' => '978-0262039246',
-                'judul' => 'Reinforcement Learning: An Introduction (2nd Edition)',
-                'penulis' => 'Richard S. Sutton, Andrew G. Barto',
-                'penerbit' => 'MIT Press',
-                'tahun_terbit' => 2018,
-                'kategori_id' => $kategoris['KAT-AI']->id,
-                'stok' => 6,
-                'sinopsis' => 'Kajian mendasar algoritma pembelajaran penguatan (reinforcement learning), Markov Decision Processes, Q-learning, dan metode policy gradient.',
+                'sinopsis' => 'Buku standar emas kecerdasan buatan dunia, mengupas agen cerdas, algoritma pencarian ruang keadaan, dan pembelajaran mesin.',
             ],
 
             // --- Sistem Operasi & Arsitektur Komputer ---
@@ -320,52 +202,43 @@ class DatabaseSeeder extends Seeder
                 'tahun_terbit' => 2018,
                 'kategori_id' => $kategoris['KAT-OS']->id,
                 'stok' => 21,
-                'sinopsis' => 'Dikenal sebagai "Buku Dinosaurus", buku teks pokok yang membahas manajemen proses, memori virtual, sinkronisasi konkurensi, dan sistem berkas.',
-            ],
-            [
-                'isbn' => '978-0133591620',
-                'judul' => 'Modern Operating Systems (4th Edition)',
-                'penulis' => 'Andrew S. Tanenbaum, Herbert Bos',
-                'penerbit' => 'Pearson',
-                'tahun_terbit' => 2014,
-                'kategori_id' => $kategoris['KAT-OS']->id,
-                'stok' => 15,
-                'sinopsis' => 'Analisis mendalam konsep arsitektur sistem operasi modern, manajemen deadlock, virtualisasi sistem, multiprosesor, dan keamanan OS.',
-            ],
-            [
-                'isbn' => '978-0134092669',
-                'judul' => 'Computer Systems: A Programmer\'s Perspective (3rd Edition)',
-                'penulis' => 'Randal E. Bryant, David R. O\'Hallaron',
-                'penerbit' => 'Pearson',
-                'tahun_terbit' => 2015,
-                'kategori_id' => $kategoris['KAT-OS']->id,
-                'stok' => 11,
-                'sinopsis' => 'Menghubungkan pemahaman hardware dan software: kompilasi kode assembly, hierarki memori cache, I/O virtual, dan arsitektur prosesor.',
-            ],
-            [
-                'isbn' => '978-0134997193',
-                'judul' => 'Computer Organization and Architecture (11th Edition)',
-                'penulis' => 'William Stallings',
-                'penerbit' => 'Pearson',
-                'tahun_terbit' => 2018,
-                'kategori_id' => $kategoris['KAT-OS']->id,
-                'stok' => 10,
-                'sinopsis' => 'Penjelasan komprehensif struktur dan fungsi komponen komputer, desain arsitektur instruksi (ISA), aritmatika komputer, dan pipelining.',
-            ],
-            [
-                'isbn' => '978-1593272203',
-                'judul' => 'The Linux Programming Interface',
-                'penulis' => 'Michael Kerrisk',
-                'penerbit' => 'No Starch Press',
-                'tahun_terbit' => 2010,
-                'kategori_id' => $kategoris['KAT-OS']->id,
-                'stok' => 8,
-                'sinopsis' => 'Buku pegangan terlengkap untuk pemrograman sistem Linux dan UNIX, mencakup system calls, manajemen proses, sinyal, IPC, dan sockets.',
+                'sinopsis' => 'Dikenal sebagai "Buku Dinosaurus", buku teks pokok yang membahas manajemen proses, memori virtual, dan sinkronisasi konkurensi.',
             ],
         ];
 
+        $createdBooks = [];
         foreach ($bukuList as $book) {
-            Buku::create($book);
+            $createdBooks[] = Buku::updateOrCreate(
+                ['isbn' => $book['isbn']],
+                $book
+            );
         }
+
+        // 4. Sample Transaksi Peminjaman untuk Audit Sirkulasi
+        Peminjaman::updateOrCreate(
+            ['kode_pinjam' => 'PINJAM-DEMO-001'],
+            [
+                'buku_id'             => $createdBooks[0]->id, // Clean Code
+                'nim_peminjam'        => '12S24020',
+                'nama_peminjam'       => 'Joice Napitupulu',
+                'tanggal_pinjam'      => now()->subDays(5)->toDateString(),
+                'tanggal_jatuh_tempo' => now()->addDays(2)->toDateString(),
+                'tanggal_kembali'     => null,
+                'status'              => 'dipinjam',
+            ]
+        );
+
+        Peminjaman::updateOrCreate(
+            ['kode_pinjam' => 'PINJAM-DEMO-002'],
+            [
+                'buku_id'             => $createdBooks[2]->id, // Design Patterns
+                'nim_peminjam'        => '11S22001',
+                'nama_peminjam'       => 'Raiden Shogun',
+                'tanggal_pinjam'      => now()->subDays(10)->toDateString(),
+                'tanggal_jatuh_tempo' => now()->subDays(3)->toDateString(),
+                'tanggal_kembali'     => now()->subDays(2)->toDateString(),
+                'status'              => 'dikembalikan',
+            ]
+        );
     }
 }
