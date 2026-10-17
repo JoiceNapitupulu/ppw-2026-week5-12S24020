@@ -5,13 +5,51 @@ namespace App\Http\Controllers;
 use App\Models\Buku;
 use App\Models\Kategori;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BukuController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of the resource with stats, withCount('peminjamans'), dynamic filters, and pagination.
+     */
+    public function index(Request $request)
     {
-        $bukus = Buku::with('kategori')->latest()->paginate(10);
-        return view('buku.index', compact('bukus'));
+        // 1. Simpan histori pencarian di Session jika ada input pencarian
+        if ($request->filled('search')) {
+            session(['last_book_search' => $request->search]);
+        }
+
+        // 2. Statistik Perpustakaan menggunakan Fluent Query Builder (DB::table)
+        $stats = [
+            'total_judul'        => DB::table('bukus')->count(),
+            'total_stok'         => DB::table('bukus')->sum('stok') ?? 0,
+            'total_dipinjam'     => DB::table('peminjamans')->where('status', 'dipinjam')->count(),
+            'total_dikembalikan' => DB::table('peminjamans')->where('status', 'dikembalikan')->count(),
+        ];
+
+        // 3. Query Katalog Buku dengan Eager Loading, withCount, Filter when(), & withQueryString()
+        $kategoriId = $request->query('kategori_id');
+        $search = $request->query('search');
+
+        $bukus = Buku::with('kategori')
+            ->withCount('peminjamans')
+            ->when($kategoriId, function ($query, $katId) {
+                return $query->where('kategori_id', $katId);
+            })
+            ->when($search, function ($query, $keyword) {
+                return $query->where(function ($q) use ($keyword) {
+                    $q->where('judul', 'like', "%{$keyword}%")
+                      ->orWhere('penulis', 'like', "%{$keyword}%")
+                      ->orWhere('isbn', 'like', "%{$keyword}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $kategoris = Kategori::orderBy('nama_kategori')->get();
+
+        return view('buku.index', compact('bukus', 'stats', 'kategoris'));
     }
 
     public function create()
@@ -41,7 +79,9 @@ class BukuController extends Controller
 
     public function show(Buku $buku)
     {
-        $buku->load('kategori');
+        $buku->load(['kategori', 'peminjamans' => function ($q) {
+            $q->latest();
+        }]);
         return view('buku.show', compact('buku'));
     }
 
