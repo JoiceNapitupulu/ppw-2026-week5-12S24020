@@ -8,6 +8,7 @@ use App\Models\Buku;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class BukuApiController extends Controller
 {
@@ -225,5 +226,120 @@ class BukuApiController extends Controller
         $buku->delete();
 
         return $this->noContentResponse();
+    }
+
+    /**
+     * GET /api/v1/bukus/{id}/referensi-eksternal (Publik)
+     * Mengambil metadata buku tambahan dari Open Library REST API (REST Consumer)
+     */
+    public function referensiEksternal(string $id): JsonResponse
+    {
+        $query = Buku::query();
+
+        if (is_numeric($id)) {
+            $query->where(function ($q) use ($id) {
+                $q->where('id', (int) $id)
+                  ->orWhere('isbn', $id);
+            });
+        } else {
+            $query->where('isbn', $id);
+        }
+
+        $buku = $query->first();
+
+        if (!$buku) {
+            return $this->problemResponse(
+                title: 'Resource Not Found',
+                detail: "Buku dengan pengenal '{$id}' tidak ditemukan di basis data lokal.",
+                status: 404,
+                errorSlug: 'buku-not-found'
+            );
+        }
+
+        // Format ISBN bersih (hilangkan tanda hubung dan spasi)
+        $cleanIsbn = str_replace(['-', ' '], '', $buku->isbn);
+        $bibKey = "ISBN:{$cleanIsbn}";
+
+        try {
+            // Panggil Open Library Books API dengan batas waktu 8 detik
+            $response = Http::withoutVerifying()
+                ->timeout(8)
+                ->acceptJson()
+                ->get('https://openlibrary.org/api/books', [
+                    'bibkeys' => "{$bibKey},ISBN:{$buku->isbn}",
+                    'format'  => 'json',
+                    'jscmd'   => 'data',
+                ]);
+
+            if ($response->failed()) {
+                return $this->problemResponse(
+                    title: 'Bad Gateway — External Service Unavailable',
+                    detail: 'Gagal berkomunikasi dengan layanan eksternal Open Library (Upstream Service Error).',
+                    status: 502,
+                    errorSlug: 'external-service-error'
+                );
+            }
+
+            $json = $response->json();
+            $bookData = $json[$bibKey] ?? $json["ISBN:{$buku->isbn}"] ?? null;
+
+            if (!$bookData) {
+                // Coba fallback ke endpoint /isbn/{isbn}.json jika format bibkeys tidak menghasilkan data
+                $fallbackRes = Http::withoutVerifying()
+                    ->timeout(8)
+                    ->acceptJson()
+                    ->get("https://openlibrary.org/isbn/{$cleanIsbn}.json");
+
+                if ($fallbackRes->successful() && !empty($fallbackRes->json())) {
+                    $fbJson = $fallbackRes->json();
+                    $bookData = [
+                        'title'           => $fbJson['title'] ?? $buku->judul,
+                        'publish_date'    => $fbJson['publish_date'] ?? null,
+                        'number_of_pages' => $fbJson['number_of_pages'] ?? null,
+                        'publishers'      => isset($fbJson['publishers']) ? array_map(fn ($p) => ['name' => $p], $fbJson['publishers']) : [],
+                        'url'             => "https://openlibrary.org/isbn/{$cleanIsbn}",
+                    ];
+                }
+            }
+
+            if (!$bookData) {
+                return $this->problemResponse(
+                    title: 'External Metadata Not Found',
+                    detail: "Metadata referensi eksternal untuk ISBN '{$buku->isbn}' tidak ditemukan pada katalog Open Library.",
+                    status: 404,
+                    errorSlug: 'external-book-not-found'
+                );
+            }
+
+            return $this->successResponse(
+                data: [
+                    'local_book' => [
+                        'id'           => $buku->id,
+                        'isbn'         => $buku->isbn,
+                        'judul'        => $buku->judul,
+                        'penulis'      => $buku->penulis,
+                        'penerbit'     => $buku->penerbit,
+                        'tahun_terbit' => $buku->tahun_terbit,
+                    ],
+                    'external_service' => [
+                        'provider'       => 'Open Library Books API',
+                        'title'          => $bookData['title'] ?? $buku->judul,
+                        'publishers'     => collect($bookData['publishers'] ?? [])->pluck('name')->toArray(),
+                        'publish_date'   => $bookData['publish_date'] ?? null,
+                        'number_of_pages'=> $bookData['number_of_pages'] ?? null,
+                        'cover_url'      => $bookData['cover']['medium'] ?? $bookData['cover']['large'] ?? null,
+                        'openlibrary_url'=> $bookData['url'] ?? "https://openlibrary.org/isbn/{$cleanIsbn}",
+                    ],
+                ],
+                message: "Metadata referensi eksternal untuk ISBN '{$buku->isbn}' berhasil diperoleh dari Open Library."
+            );
+        } catch (\Throwable $e) {
+            return $this->problemResponse(
+                title: 'Gateway Timeout / Connection Error',
+                detail: 'Koneksi ke Open Library mengalami batas waktu (timeout) atau gangguan jaringan: ' . $e->getMessage(),
+                status: 502,
+                errorSlug: 'external-service-timeout'
+            );
+        }
     }
 }

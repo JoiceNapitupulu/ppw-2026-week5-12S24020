@@ -13,6 +13,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/bukus', [BukuApiController::class, 'index']);
     Route::get('/bukus/{id}', [BukuApiController::class, 'show']);
+    Route::get('/bukus/{id}/referensi-eksternal', [BukuApiController::class, 'referensiEksternal']);
 
     // =========================================================================
     // 2. ENDPOINT TERPROTEKSI STATELESS BEARER TOKEN (auth:sanctum)
