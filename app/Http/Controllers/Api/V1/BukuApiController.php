@@ -258,18 +258,23 @@ class BukuApiController extends Controller
 
         // Format ISBN bersih (hilangkan tanda hubung dan spasi)
         $cleanIsbn = str_replace(['-', ' '], '', $buku->isbn);
-        $bibKey = "ISBN:{$cleanIsbn}";
 
         try {
-            // Panggil Open Library Books API dengan batas waktu 8 detik
+            // Panggil Open Library Books API via /isbn/{isbn}.json (paksa IPv4 untuk stabilitas koneksi)
             $response = Http::withoutVerifying()
-                ->timeout(8)
+                ->withOptions(['ip_resolve' => 'v4'])
+                ->timeout(10)
                 ->acceptJson()
-                ->get('https://openlibrary.org/api/books', [
-                    'bibkeys' => "{$bibKey},ISBN:{$buku->isbn}",
-                    'format'  => 'json',
-                    'jscmd'   => 'data',
-                ]);
+                ->get("https://openlibrary.org/isbn/{$cleanIsbn}.json");
+
+            if ($response->status() === 404) {
+                return $this->problemResponse(
+                    title: 'External Metadata Not Found',
+                    detail: "Metadata referensi eksternal untuk ISBN '{$buku->isbn}' tidak ditemukan pada katalog Open Library.",
+                    status: 404,
+                    errorSlug: 'external-book-not-found'
+                );
+            }
 
             if ($response->failed()) {
                 return $this->problemResponse(
@@ -280,35 +285,28 @@ class BukuApiController extends Controller
                 );
             }
 
-            $json = $response->json();
-            $bookData = $json[$bibKey] ?? $json["ISBN:{$buku->isbn}"] ?? null;
+            $bookData = $response->json();
 
-            if (!$bookData) {
-                // Coba fallback ke endpoint /isbn/{isbn}.json jika format bibkeys tidak menghasilkan data
-                $fallbackRes = Http::withoutVerifying()
-                    ->timeout(8)
-                    ->acceptJson()
-                    ->get("https://openlibrary.org/isbn/{$cleanIsbn}.json");
-
-                if ($fallbackRes->successful() && !empty($fallbackRes->json())) {
-                    $fbJson = $fallbackRes->json();
-                    $bookData = [
-                        'title'           => $fbJson['title'] ?? $buku->judul,
-                        'publish_date'    => $fbJson['publish_date'] ?? null,
-                        'number_of_pages' => $fbJson['number_of_pages'] ?? null,
-                        'publishers'      => isset($fbJson['publishers']) ? array_map(fn ($p) => ['name' => $p], $fbJson['publishers']) : [],
-                        'url'             => "https://openlibrary.org/isbn/{$cleanIsbn}",
-                    ];
-                }
-            }
-
-            if (!$bookData) {
+            if (empty($bookData)) {
                 return $this->problemResponse(
                     title: 'External Metadata Not Found',
                     detail: "Metadata referensi eksternal untuk ISBN '{$buku->isbn}' tidak ditemukan pada katalog Open Library.",
                     status: 404,
                     errorSlug: 'external-book-not-found'
                 );
+            }
+
+            $publishers = [];
+            if (isset($bookData['publishers'])) {
+                foreach ($bookData['publishers'] as $pub) {
+                    $publishers[] = is_array($pub) ? ($pub['name'] ?? '') : (string) $pub;
+                }
+            }
+
+            $coverUrl = null;
+            if (!empty($bookData['covers'])) {
+                $coverId = $bookData['covers'][0];
+                $coverUrl = "https://covers.openlibrary.org/b/id/{$coverId}-M.jpg";
             }
 
             return $this->successResponse(
@@ -322,13 +320,13 @@ class BukuApiController extends Controller
                         'tahun_terbit' => $buku->tahun_terbit,
                     ],
                     'external_service' => [
-                        'provider'       => 'Open Library Books API',
-                        'title'          => $bookData['title'] ?? $buku->judul,
-                        'publishers'     => collect($bookData['publishers'] ?? [])->pluck('name')->toArray(),
-                        'publish_date'   => $bookData['publish_date'] ?? null,
-                        'number_of_pages'=> $bookData['number_of_pages'] ?? null,
-                        'cover_url'      => $bookData['cover']['medium'] ?? $bookData['cover']['large'] ?? null,
-                        'openlibrary_url'=> $bookData['url'] ?? "https://openlibrary.org/isbn/{$cleanIsbn}",
+                        'provider'        => 'Open Library Books API',
+                        'title'           => $bookData['title'] ?? $buku->judul,
+                        'publishers'      => $publishers,
+                        'publish_date'    => $bookData['publish_date'] ?? null,
+                        'number_of_pages' => $bookData['number_of_pages'] ?? null,
+                        'cover_url'       => $coverUrl,
+                        'openlibrary_url' => "https://openlibrary.org/isbn/{$cleanIsbn}",
                     ],
                 ],
                 message: "Metadata referensi eksternal untuk ISBN '{$buku->isbn}' berhasil diperoleh dari Open Library."

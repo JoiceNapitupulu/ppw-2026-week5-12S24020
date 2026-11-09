@@ -8,7 +8,7 @@
     <!-- Google Fonts: Plus Jakarta Sans & Instrument Serif -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
     
     <!-- Bootstrap 5.3.3 & Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -37,7 +37,6 @@
             letter-spacing: -0.02em;
         }
 
-        /* Editorial Serif Font Styles */
         .font-serif {
             font-family: 'Instrument Serif', Georgia, serif;
         }
@@ -197,6 +196,37 @@
                             <i class="bi bi-tags-fill me-1"></i> Kategori Buku
                         </a>
                     </li>
+                    @auth
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('peminjaman.*') ? 'active' : '' }}" href="{{ route('peminjaman.index') }}">
+                            <i class="bi bi-arrow-left-right me-1"></i> Sirkulasi Peminjaman
+                        </a>
+                    </li>
+                    @endauth
+                </ul>
+
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
+                    @auth
+                        <li class="nav-item d-flex align-items-center text-white small me-2">
+                            <span class="badge bg-light text-dark px-2 py-1">
+                                <i class="bi bi-person-check-fill text-primary me-1"></i> {{ Auth::user()->name }} (Pustakawan)
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-light">
+                                    <i class="bi bi-box-arrow-right me-1"></i> Keluar
+                                </button>
+                            </form>
+                        </li>
+                    @else
+                        <li class="nav-item">
+                            <a href="{{ route('login') }}" class="btn btn-sm btn-light fw-semibold text-purple" style="color: #4C1D95;">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Login Pustakawan
+                            </a>
+                        </li>
+                    @endauth
                 </ul>
             </div>
         </div>

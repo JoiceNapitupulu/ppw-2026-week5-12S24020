@@ -37,19 +37,12 @@ class ExternalConsumerTest extends TestCase
     public function test_external_metadata_success(): void
     {
         Http::fake([
-            'https://openlibrary.org/api/books*' => Http::response([
-                'ISBN:9780132350884' => [
-                    'title'           => 'Clean Code: A Handbook of Agile Software Craftsmanship',
-                    'publish_date'    => 'August 1, 2008',
-                    'number_of_pages' => 464,
-                    'publishers'      => [
-                        ['name' => 'Prentice Hall'],
-                    ],
-                    'cover' => [
-                        'medium' => 'https://covers.openlibrary.org/b/id/12345-M.jpg',
-                    ],
-                    'url' => 'https://openlibrary.org/books/OL12345M',
-                ],
+            'https://openlibrary.org/isbn/*' => Http::response([
+                'title'           => 'Clean Code: A Handbook of Agile Software Craftsmanship',
+                'publish_date'    => 'August 1, 2008',
+                'number_of_pages' => 464,
+                'publishers'      => ['Prentice Hall'],
+                'covers'          => [12345],
             ], 200),
         ]);
 
@@ -71,8 +64,7 @@ class ExternalConsumerTest extends TestCase
     public function test_external_metadata_not_found_on_openlibrary(): void
     {
         Http::fake([
-            'https://openlibrary.org/api/books*' => Http::response([], 200),
-            'https://openlibrary.org/isbn/*'     => Http::response([], 404),
+            'https://openlibrary.org/isbn/*' => Http::response([], 404),
         ]);
 
         $response = $this->getJson("/api/v1/bukus/{$this->buku->id}/referensi-eksternal");

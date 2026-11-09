@@ -219,8 +219,11 @@ Bagian ini menyajikan dokumentasi tangkapan layar pengujian fungsionalitas Web S
 > 1. Menguji `PATCH /api/v1/bukus/{id}` hanya mengirimkan body `{"stok": 25}` -> atribut lain tetap utuh tidak berubah.
 > 2. Menguji `PUT /api/v1/bukus/{id}` mengirim seluruh representasi tanpa menyertakan kolom opsional `sinopsis` -> sinopsis direset menjadi `null` di basis data.
 
-![Bukti Pengujian Perbedaan PUT vs PATCH](docs/screenshots/05-put-vs-patch.png)
-*Gambar 4.5: Bukti konkret perbedaan semantik full replacement (PUT) dan modifikasi parsial (PATCH).*
+![Bukti Pengujian PATCH Partial Update](docs/screenshots/05-put-vs-patch.png)
+*Gambar 4.5.1: Pengujian modifikasi parsial (PATCH) yang hanya memperbarui atribut stok.*
+
+![Bukti Pengujian PUT Full Replacement](docs/screenshots/05-put-vs-patch-2.png)
+*Gambar 4.5.2: Pengujian penggantian penuh representasi (PUT).*
 
 ---
 
@@ -231,8 +234,11 @@ Bagian ini menyajikan dokumentasi tangkapan layar pengujian fungsionalitas Web S
 > 3. Penolakan duplikasi pinjaman aktif oleh mahasiswa yang sama -> status `409 Conflict`.
 > 4. Pengembalian buku `PATCH /api/v1/peminjamans/{id}/kembalikan` -> status `200 OK`, stok kembali bertambah (+1).
 
-![Bukti Pengujian Transaksi Peminjaman ACID dan Konflik](docs/screenshots/06-transaksi-sirkulasi-acid.png)
-*Gambar 4.6: Pengujian transaksi peminjaman ACID, penolakan stok habis (422), dan konflik duplikasi (409).*
+![Bukti Pengujian Transaksi Peminjaman Sukses](docs/screenshots/06-transaksi-sirkulasi-acid.png)
+*Gambar 4.6.1: Transaksi peminjaman buku baru berhasil dengan status 201 Created.*
+
+![Bukti Pengujian Penolakan Duplikasi Konflik 409](docs/screenshots/06-transaksi-sirkulasi-acid-2.png)
+*Gambar 4.6.2: Penolakan duplikasi pinjaman aktif oleh mahasiswa yang sama (409 Conflict berstandar RFC 7807).*
 
 ---
 
